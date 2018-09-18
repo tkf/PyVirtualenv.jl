@@ -7,11 +7,56 @@
 
 ## Usage
 
+### Activate a Python virtualenv in Julia REPL
+
 ```julia
 julia> using PyVirtualenv
 julia> PyVirtualenv.activate("PATH/TO/bin/python")
 julia> using PyCall
 ```
+
+### Activate a Python virtualenv via [Pipenv]
+
+[Pipenv]: https://pipenv.readthedocs.io/en/latest/
+
+```julia
+julia> using PyVirtualenv
+julia> PyVirtualenv.activate_pipenv("PATH/TO/Pipfile")
+julia> using PyCall
+```
+
+### Automate environment activation
+
+Create a file at `$PROJECT/activate.jl` with
+
+```julia
+import Pkg
+Pkg.activate(@__DIR__)
+import PyVirtualenv
+PyVirtualenv.activate_pipenv(@__DIR__)
+```
+
+where `$PROJECT` is a directory in which `Project.toml` and `Pipfile`
+exists.
+
+Then you can start a Julia REPL with Julia and Python environments
+activated together by:
+
+```console
+$ julia -i activate.jl
+```
+
+To run a Julia script with all Julia and Python dependencies of `$PROJECT`,
+run
+
+```julia
+include("$PROJECT/activate.jl")
+```
+
+in the very beginning of the script.
+
+Note that `pkg> instantiate` and `shell> pipenv install` still have to
+be run manually when using the project for the first time.
 
 
 [travis-img]: https://travis-ci.org/tkf/PyVirtualenv.jl.svg?branch=master
