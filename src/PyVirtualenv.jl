@@ -7,6 +7,9 @@ const _pycall_deps_jl = Ref{Module}()
 """ Get path to `PyCall/deps/deps.jl` """
 function pycall_deps_jl_path()
     modpath = Base.locate_package(Base.identify_package("PyCall"))
+    if modpath === nothing
+        error("PyCall not found")
+    end
     return joinpath(dirname(modpath), "..", "deps", "deps.jl")
 end
 # e.g., ~/.julia/dev/PyCall/deps/deps.jl
@@ -62,6 +65,16 @@ function pythonhome_of(pyprogramname::AbstractString)
     return read(open(`$pyprogramname -c $script`), String)
 end
 
+function libpython_handle()
+    libpython = pycall_deps_jl().libpython
+    return Libdl.dlopen(libpython,
+                        Libdl.RTLD_LAZY|Libdl.RTLD_DEEPBIND|Libdl.RTLD_GLOBAL)
+end
+
+function Py_IsInitialized(handle = libpython_handle())
+    return ccall(Libdl.dlsym(handle, :Py_IsInitialized), Cint, ()) != 0
+end
+
 """
     activate(pyprogramname::String, [PYTHONHOME::String])
 
@@ -70,12 +83,11 @@ be compatible with the Python program configured for PyCall.jl.
 """
 function activate(pyprogramname::AbstractString,
                   PYTHONHOME::AbstractString = pythonhome_of(pyprogramname))
-    libpython = pycall_deps_jl().libpython
-    handle = Libdl.dlopen(libpython, Libdl.RTLD_LAZY|Libdl.RTLD_DEEPBIND|Libdl.RTLD_GLOBAL)
+    handle = libpython_handle()
 
     fp(f::Symbol) = Libdl.dlsym(handle, f)
 
-    already_inited = 0 != ccall(fp(:Py_IsInitialized), Cint, ())
+    already_inited = Py_IsInitialized(handle)
     if already_inited
         error("Re-activation not supported.")
     end
