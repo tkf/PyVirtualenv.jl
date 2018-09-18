@@ -79,6 +79,12 @@ function pythonhome_of(pyprogramname::AbstractString)
     end
     cmd = `$pyprogramname -c $script`
     @debug "Trying to find out PYTHONHOME." cmd
+
+    # For Windows:
+    env = copy(ENV)
+    env["PYTHONIOENCODING"] = "UTF-8"
+    cmd = setenv(cmd, env)
+
     return read(open(cmd), String)
 end
 
