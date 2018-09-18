@@ -141,6 +141,73 @@ function activate(pyprogramname::AbstractString,
     ccall(fp(:Py_InitializeEx), Cvoid, (Cint,), 0)
 end
 
+function pipenv_python(path::AbstractString)
+    dir = isdir(path) ? path : dirname(path)
+    return rstrip(read(setenv(`pipenv --py`; dir=dir), String))
+end
+
+"""
+    activate_pipenv([path::String = pwd()])
+    activate_pipenv(module::Module)
+    activate_pipenv(package::Symbol)
+
+**WARNING**  Same restriction as `activate` applies here.
+
+# Examples
+```
+julia> PyVirtualenv.activate_pipenv("PATH/TO/PROJECT/Pipfile")
+julia> PyVirtualenv.activate_pipenv("PATH/TO/PROJECT/")  # equivalent
+```
+
+If you have `Pipfile` in the same directory as in `Project.toml`, you can
+pass the module object to this function:
+
+```
+julia> using MyModule
+julia> PyVirtualenv.activate_pipenv(MyModule)
+```
+
+However, if you use `PyCall` inside `MyModule`, above call to `activate_pipenv`
+is too late.  One way of working around this problem is:
+
+```
+module MyModule
+
+using PyVirtualenv
+
+function __init__()
+    PyVirtualenv.activate_pipenv(@__MODULE__)
+    @eval using PyCall
+end
+
+end
+```
+
+Another way is to manually run `activate_pipenv(:MyModule)` (note that the
+argument is a `Symbol`) before importing `MyModule`.
+
+```
+julia> PyVirtualenv.activate_pipenv(:MyModule)
+julia> using MyModule
+```
+"""
+function activate_pipenv(path::AbstractString = pwd())
+    activate(pipenv_python(path))
+end
+
+activate_pipenv(m::Union{Module, Symbol}) = activate_pipenv(_pathof(m))
+
+function _pathof(m)
+    path = __pathof(m)
+    if path === nothing
+        error("Cannot find the path of module $m.")
+    end
+    return path
+end
+
+__pathof(m::Module) = pathof(m)
+__pathof(m::Symbol) = Base.find_package(string(m))
+
 const pycall_pkgid =
     PkgId(UUID("438e738f-606a-5dbb-bf0a-cddfbfd45ab0"), "PyCall")
 
