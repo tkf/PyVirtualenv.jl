@@ -41,8 +41,10 @@ end
         """
     else
         @test activate(pyprogramname) == nothing
+        @test activate(pyprogramname) == nothing  # it's idempotent
     end
-    @test_throws ErrorException activate(pyprogramname)
+    @test_throws ErrorException activate("non-existing-python",
+                                         "non-existing-home")
 
     local sys_executable
     @eval using PyCall

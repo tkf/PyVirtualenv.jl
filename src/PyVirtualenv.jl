@@ -100,6 +100,40 @@ function Py_IsInitialized(handle = libpython_handle())
     return ccall(Libdl.dlsym(handle, :Py_IsInitialized), Cint, ()) != 0
 end
 
+function is_same_env(pyprogramname::AbstractString,
+                     PYTHONHOME::AbstractString = pythonhome_of(pyprogramname))
+    if !Py_IsInitialized()
+        @debug "Py_IsInitialized() = false"
+        return false
+    end
+    @debug "Loading PyCall..."
+    @eval import PyCall
+    return Base.invokelatest(_is_same_env, PyCall, pyprogramname, PYTHONHOME)
+end
+
+function _is_same_env(PyCall, pyprogramname, PYTHONHOME)
+    sys = PyCall.pyimport("sys")
+    loaded_executable = sys[:executable]
+    prefix = sys[:prefix]
+    exec_prefix = sys[:exec_prefix]
+    if Sys.iswindows()
+        loaded_pythonhome = "$exec_prefix"
+    else
+        loaded_pythonhome = "$prefix:$exec_prefix"
+    end
+    @debug """
+    Given:
+        pyprogramname = $pyprogramname
+        PYTHONHOME    = $PYTHONHOME
+    From Python interpreter:
+        sys.executable  = $loaded_executable
+        sys.prefix      = $prefix
+        sys.exec_prefix = $exec_prefix
+    """
+    return loaded_executable == pyprogramname &&
+        loaded_pythonhome == PYTHONHOME
+end
+
 """
     activate(pyprogramname::String, [PYTHONHOME::String])
 
@@ -114,6 +148,10 @@ function activate(pyprogramname::AbstractString,
 
     already_inited = Py_IsInitialized(handle)
     if already_inited
+        if is_same_env(pyprogramname, PYTHONHOME)
+            @debug "Re-activating the same environment (which is OK)."
+            return
+        end
         error("Re-activation not supported.")
     end
 
@@ -211,8 +249,10 @@ __pathof(m::Symbol) = Base.find_package(string(m))
 const pycall_pkgid =
     PkgId(UUID("438e738f-606a-5dbb-bf0a-cddfbfd45ab0"), "PyCall")
 
-function load_pycall()
-    if !haskey(Base.loaded_modules, pycall_pkgid)
+is_pycall_loaded() = haskey(Base.loaded_modules, pycall_pkgid)
+
+function loaded_pycall()
+    if !is_pycall_loaded()
         error("PyCall not loaded.")
     end
     return Base.loaded_modules[pycall_pkgid]
@@ -224,7 +264,7 @@ end
 Works like Python 2 `execfile` except that `globals` is always required.
 """
 pyexecfile(path::AbstractString, args...) =
-    _pyexecfile(load_pycall(), path, args...)
+    _pyexecfile(loaded_pycall(), path, args...)
 
 function _pyexecfile(PyCall, path::AbstractString,
                      globals::AbstractDict,
