@@ -20,7 +20,7 @@ function pycall_deps_jl()
     if isdefined(_pycall_deps_jl, 1)
         return _pycall_deps_jl[]
     end
-    mod = Module()
+    mod = Module(:__PyCall_deps__)
     Base.include(mod, pycall_deps_jl_path())
     _pycall_deps_jl[] = mod
     @debug "PyCall/deps/deps.jl:\n$(sprint(show_deps_jl, mod))"
