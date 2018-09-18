@@ -1,5 +1,6 @@
 module PyVirtualenv
 
+using Base: PkgId, UUID
 using Libdl
 
 const _pycall_deps_jl = Ref{Module}()
@@ -138,6 +139,54 @@ function activate(pyprogramname::AbstractString,
 
     @debug "Py_InitializeEx()"
     ccall(fp(:Py_InitializeEx), Cvoid, (Cint,), 0)
+end
+
+const pycall_pkgid =
+    PkgId(UUID("438e738f-606a-5dbb-bf0a-cddfbfd45ab0"), "PyCall")
+
+function load_pycall()
+    if !haskey(Base.loaded_modules, pycall_pkgid)
+        error("PyCall not loaded.")
+    end
+    return Base.loaded_modules[pycall_pkgid]
+end
+
+"""
+    pyexecfile(path, globals, [locals])
+
+Works like Python 2 `execfile` except that `globals` is always required.
+"""
+pyexecfile(path::AbstractString, args...) =
+    _pyexecfile(load_pycall(), path, args...)
+
+function _pyexecfile(PyCall, path::AbstractString,
+                     globals::AbstractDict,
+                     locals::AbstractDict = globals)
+    globals = convert(PyCall.PyDict, globals)
+    locals = convert(PyCall.PyDict, locals)
+    if PyCall.pyversion.major < 3
+        PyCall.pybuiltin("execfile")(path, globals, locals)
+    else
+        src = read(path, String)
+        code = PyCall.pybuiltin("compile")(src, path, "exec")
+        PyCall.pybuiltin("exec")(code, globals, locals)
+    end
+end
+
+"""
+    activate_this(activate_this_py::String)
+
+See:
+https://virtualenv.pypa.io/en/stable/userguide/#using-virtualenv-without-bin-python
+
+# Examples
+```
+julia> PyVirtualenv.activate_this("VIRTUAL_ENV/bin/activate_this.py")
+```
+"""
+function activate_this(activate_this_py::AbstractString)
+    pyexecfile(activate_this_py, Dict("__file__" => activate_this_py))
+    return nothing
 end
 
 end  # module
