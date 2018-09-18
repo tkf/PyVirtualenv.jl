@@ -66,8 +66,6 @@ function pythonhome_of(pyprogramname::AbstractString)
     if Sys.iswindows()
         script = """
         import sys
-        sys.stdout.write(sys.prefix)
-        sys.stdout.write(":")
         sys.stdout.write(sys.exec_prefix)
         """
         # [[~/.julia/dev/PyCall/deps/build.jl::PYTHONHOME]]
@@ -75,7 +73,10 @@ function pythonhome_of(pyprogramname::AbstractString)
         script = """
         import sys
         sys.stdout.write(sys.prefix)
+        sys.stdout.write(":")
+        sys.stdout.write(sys.exec_prefix)
         """
+        # https://docs.python.org/3/using/cmdline.html#envvar-PYTHONHOME
     end
     cmd = `$pyprogramname -c $script`
     @debug "Trying to find out PYTHONHOME." cmd
