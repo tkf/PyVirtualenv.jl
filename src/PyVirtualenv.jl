@@ -87,7 +87,7 @@ function pythonhome_of(pyprogramname::AbstractString)
     env["PYTHONIOENCODING"] = "UTF-8"
     cmd = setenv(cmd, env)
 
-    return read(open(cmd), String)
+    return read(cmd, String)
 end
 
 function libpython_handle()
