@@ -48,7 +48,12 @@ end
     @eval using PyCall
     sys_executable = pyimport("sys")[:executable]
     if !was_inited
-        @test sys_executable == pyprogramname
+        if Sys.iswindows()
+            @info "sys.executable = $sys_executable"
+            @test_broken sys_executable == pyprogramname
+        else
+            @test sys_executable == pyprogramname
+        end
     end
 end
 
