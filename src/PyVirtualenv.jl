@@ -208,6 +208,38 @@ end
 __pathof(m::Module) = pathof(m)
 __pathof(m::Symbol) = Base.find_package(string(m))
 
+"""
+    @activate_pipenv
+
+Load Pipfile associated with the current project.
+
+# Examples
+```
+using PyVirtualenv
+PyVirtualenv.@activate_pipenv  # which must come before `using PyCall`
+
+using PyCall
+```
+"""
+macro activate_pipenv()
+    submod = gensym(:__ActivatePipenv__)
+    expr = quote
+        module $submod
+            function __init__()
+                try
+                    $activate_pipenv($__module__)
+                catch err
+                    @error($("Pipenv for $__module__ cannot be activated."),
+                           exception=err)
+                end
+            end
+        end
+        using .$submod
+    end
+    return Expr(:toplevel, esc.(expr.args)...)
+end
+# https://github.com/JuliaLang/julia/issues/21009
+
 const pycall_pkgid =
     PkgId(UUID("438e738f-606a-5dbb-bf0a-cddfbfd45ab0"), "PyCall")
 
