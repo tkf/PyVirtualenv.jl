@@ -1,7 +1,21 @@
 # PyVirtualenv
 
-[![Build Status](https://travis-ci.org/tkf/PyVirtualenv.jl.svg?branch=master)](https://travis-ci.org/tkf/PyVirtualenv.jl)
+[![Build Status][travis-img]][travis-url]
+[![Coverage Status][coveralls-img]][coveralls-url]
+[![codecov.io][codecov-img]][codecov-url]
 
-[![Coverage Status](https://coveralls.io/repos/tkf/PyVirtualenv.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/tkf/PyVirtualenv.jl?branch=master)
+## Usage
 
-[![codecov.io](http://codecov.io/github/tkf/PyVirtualenv.jl/coverage.svg?branch=master)](http://codecov.io/github/tkf/PyVirtualenv.jl?branch=master)
+```julia
+julia> using PyVirtualenv
+julia> PyVirtualenv.activate("PATH/TO/bin/python")
+julia> using PyCall
+```
+
+
+[travis-img]: https://travis-ci.org/tkf/PyVirtualenv.jl.svg?branch=master
+[travis-url]: https://travis-ci.org/tkf/PyVirtualenv.jl
+[coveralls-img]: https://coveralls.io/repos/tkf/PyVirtualenv.jl/badge.svg?branch=master&service=github
+[coveralls-url]: https://coveralls.io/github/tkf/PyVirtualenv.jl?branch=master
+[codecov-img]: http://codecov.io/github/tkf/PyVirtualenv.jl/coverage.svg?branch=master
+[codecov-url]: http://codecov.io/github/tkf/PyVirtualenv.jl?branch=master
