@@ -10,6 +10,7 @@ function pycall_deps_jl_path()
     if modpath === nothing
         error("PyCall not found")
     end
+    @debug "PyCall.jl found at: $modpath"
     return joinpath(dirname(modpath), "..", "deps", "deps.jl")
 end
 # e.g., ~/.julia/dev/PyCall/deps/deps.jl
@@ -22,7 +23,21 @@ function pycall_deps_jl()
     mod = Module()
     Base.include(mod, pycall_deps_jl_path())
     _pycall_deps_jl[] = mod
+    @debug "PyCall/deps/deps.jl:\n$(sprint(show_deps_jl, mod))"
     return mod
+end
+
+function show_deps_jl(io, mod)
+    for name in sort(names(mod; all=true))
+        val = try
+            getproperty(mod, name)
+        catch
+            continue
+        end
+        if val isa Union{String, Bool}
+            println(name, " =\t", val)
+        end
+    end
 end
 
 _clength(x::Cstring) = ccall(:strlen, Csize_t, (Cstring,), x) + 1
@@ -62,7 +77,9 @@ function pythonhome_of(pyprogramname::AbstractString)
         sys.stdout.write(sys.prefix)
         """
     end
-    return read(open(`$pyprogramname -c $script`), String)
+    cmd = `$pyprogramname -c $script`
+    @debug "Trying to find out PYTHONHOME." cmd
+    return read(open(cmd), String)
 end
 
 function libpython_handle()
@@ -94,6 +111,7 @@ function activate(pyprogramname::AbstractString,
 
     is_py2 = pycall_deps_jl().pyversion_build.major < 3
 
+    @debug "Py_SetPythonHome($PYTHONHOME)"
     if is_py2
         ccall(fp(:Py_SetPythonHome), Cvoid, (Cstring,),
               _leak(Cstring, PYTHONHOME))
@@ -102,6 +120,7 @@ function activate(pyprogramname::AbstractString,
               _leak(Cwstring, PYTHONHOME))
     end
 
+    @debug "Py_SetProgramName($pyprogramname)"
     if is_py2
         ccall(fp(:Py_SetProgramName), Cvoid, (Cstring,),
               _leak(Cstring, pyprogramname))
@@ -109,6 +128,8 @@ function activate(pyprogramname::AbstractString,
         ccall(fp(:Py_SetProgramName), Cvoid, (Ptr{Cwchar_t},),
               _leak(Cwstring, pyprogramname))
     end
+
+    @debug "Py_InitializeEx()"
     ccall(fp(:Py_InitializeEx), Cvoid, (Cint,), 0)
 end
 
