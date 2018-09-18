@@ -1,6 +1,13 @@
-authors = ["Takafumi Arakaki <aka.tkf@gmail.com>"]
 name = "PyVirtualenv"
 uuid = "91719084-bad4-11e8-3336-8bad47a10c55"
+authors = ["Takafumi Arakaki <aka.tkf@gmail.com>"]
 version = "0.1.0"
 
 [deps]
+Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
