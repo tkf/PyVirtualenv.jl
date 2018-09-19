@@ -10,6 +10,7 @@ matrix:
   include:
     - os: osx
       julia: 1.0
+      before_script: skip
 notifications:
   email: false
 git:
@@ -26,8 +27,10 @@ git:
 #  apt: # apt-get for linux
 #    packages:
 #    - gfortran
-#before_script: # homebrew for mac
-#  - if [ $TRAVIS_OS_NAME = osx ]; then brew install gcc; fi
+before_script:
+  - sudo apt-get -qq update && sudo apt-get install -y python3-pip
+  - pip3 install --user pipenv
+  - which pipenv
 
 ## uncomment the following lines to override the default test script
 #script:
