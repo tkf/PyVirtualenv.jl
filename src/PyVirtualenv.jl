@@ -130,6 +130,10 @@ function _is_same_env(PyCall, pyprogramname, PYTHONHOME)
         sys.prefix      = $prefix
         sys.exec_prefix = $exec_prefix
     """
+    if Sys.iswindows()
+        # Py_SetProgramName does not work on Windows?
+        return loaded_pythonhome == PYTHONHOME
+    end
     return loaded_executable == pyprogramname &&
         loaded_pythonhome == PYTHONHOME
 end
