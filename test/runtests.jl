@@ -59,13 +59,15 @@ end
     end
 end
 
-@testset for file in sort([file for file in readdir(joinpath(@__DIR__, "exec"))
+execdir = joinpath(@__DIR__, "exec")
+
+@testset for file in sort([file for file in readdir(execdir)
                            if endswith(file, ".jl")])
     script = """
-    $(Base.load_path_setup_code())
-    include($(repr(joinpath(@__DIR__, "exec", file))))
+    $(Base.load_path_setup_code(false))
+    include($(repr(joinpath(execdir, file))))
     """
-    cmd = `$(Base.julia_cmd()) --startup-file=no -e $script`
+    cmd = `$(Base.julia_cmd()) --startup-file=no --project=$execdir -e $script`
     @debug "Running" cmd
     env = copy(ENV)
     env["PYVIRTUALENV_JL_TEST_TARGET"] = dirname(@__DIR__)
