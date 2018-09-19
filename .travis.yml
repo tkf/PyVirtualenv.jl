@@ -36,7 +36,9 @@ before_script:
 #script:
 #  - julia -e 'Pkg.clone(pwd()); Pkg.build("PyVirtualenv"); Pkg.test("PyVirtualenv"; coverage=true)'
 after_success:
+  - cat Manifest.toml
+  - julia --color=yes -e 'using Pkg; Pkg.add("Coverage")'
   # push coverage results to Coveralls
-  - julia -e 'cd(Pkg.dir("PyVirtualenv")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
+  - julia --color=yes -e 'using Coverage; Coveralls.submit(Coveralls.process_folder())'
   # push coverage results to Codecov
-  - julia -e 'cd(Pkg.dir("PyVirtualenv")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
+  - julia --color=yes -e 'using Coverage; Codecov.submit(Codecov.process_folder())'
