@@ -27,7 +27,8 @@ julia> using PyCall
 
 ### Automate environment activation
 
-Create a file at `$PROJECT/activate.jl` with
+In the directory `$PROJECT` where `Project.toml` and `Pipfile` exist,
+create a file called `activate.jl` with:
 
 ```julia
 import Pkg
@@ -36,13 +37,11 @@ import PyVirtualenv
 PyVirtualenv.activate_pipenv(@__DIR__)
 ```
 
-where `$PROJECT` is a directory in which `Project.toml` and `Pipfile`
-exists.
-
 Then you can start a Julia REPL with Julia and Python environments
 activated together by:
 
 ```console
+$ cd $PROJECT
 $ julia -i activate.jl
 ```
 
