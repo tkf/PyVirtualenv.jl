@@ -61,19 +61,24 @@ end
 
 execdir = joinpath(@__DIR__, "exec")
 
-@testset for file in sort([file for file in readdir(execdir)
-                           if endswith(file, ".jl")])
-    script = """
-    $(Base.load_path_setup_code(false))
-    include($(repr(joinpath(execdir, file))))
-    """
-    cmd = `$(Base.julia_cmd()) --startup-file=no --project=$execdir -e $script`
-    @debug "Running" cmd
-    env = copy(ENV)
-    env["PYVIRTUALENV_JL_TEST_TARGET"] = dirname(@__DIR__)
-    mktempdir() do path
-        cmd = setenv(cmd, env; dir=path)
-        @test success(pipeline(cmd; stdout=stdout, stderr=stderr))
+if Sys.which("pipenv") == nothing
+    @warn "`pipenv` command not found. Skipping `test/exec/*.jl`."
+else
+    @testset for file in sort([file for file in readdir(execdir)
+                               if endswith(file, ".jl")])
+        script = """
+        $(Base.load_path_setup_code(false))
+        include($(repr(joinpath(execdir, file))))
+        """
+        cmd = Base.julia_cmd()
+        cmd = `$cmd --startup-file=no --project=$execdir -e $script`
+        @debug "Running" cmd
+        env = copy(ENV)
+        env["PYVIRTUALENV_JL_TEST_TARGET"] = dirname(@__DIR__)
+        mktempdir() do path
+            cmd = setenv(cmd, env; dir=path)
+            @test success(pipeline(cmd; stdout=stdout, stderr=stderr))
+        end
     end
 end
 
